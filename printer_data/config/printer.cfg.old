@@ -1,25 +1,14 @@
 # This file contains common pin mappings for the Fysetc Spider board.
 # To use this config, the firmware should be compiled for the STM32F446.
 # When calling "menuconfig", enable "extra low-level configuration setup"
-# and select the "12MHz crystal" as clock reference
+# and select the "12MHz crystal" as clock reference.
 # For flashing, write the compiled klipper.bin to memory location 0x08000000
 
 # See docs/Config_Reference.md for a description of parameters.
-
-## Voron Design VORON2 250/300/350mm Spider TMC2209 UART config
-
-## *** THINGS TO CHANGE/CHECK: ***
-## Spider version                       Please search this file for "SpiderVersion" and uncomment the appropriate line for each
-## MCU paths                            [mcu] section
-## Thermistor types                     [extruder] and [heater_bed] sections - See 'sensor types' list at end of file
-## Z Endstop Switch location            [safe_z_home] section
-## Homing end position                  [gcode_macro G32] section
-## Z Endstop Switch  offset for Z0      [stepper_z] section
-## Probe points                         [quad_gantry_level] section
-## Min & Max gantry corner postions     [quad_gantry_level] section
-## PID tune                             [extruder] and [heater_bed] sections
-## Fine tune E steps                    [extruder] section
-
+# Obtain definition by "ls -l /dev/serial/by-id/" then unplug to verify
+##--------------------------------------------------------------------
+##[include client.cfg]
+##[include client_macros.cfg]
 [include mainsail.cfg]
 [include Adaptive_Mesh.cfg]
 [include euclid.cfg]
@@ -27,39 +16,53 @@
 [include TEST_SPEED.cfg]
 [include shell_command.cfg]
 
-[mcu]
-## Uncomment below if you're using the Raspberry uart0 to communicate with Spider
-#restart_method: command
 
+[exclude_object]
+
+[mcu]
 ##  You need to select 'Communication interface' to USB in 'make menuconfig'
 ##  when you compile Klipper for Spider
 ##	Obtain definition by "ls -l /dev/serial/by-id/" then unplug to verify
 ##--------------------------------------------------------------------
-#serial: /dev/serial/by-id/usb-Klipper_stm32f446xx_230032000851363131363530-if00
+#serial: /dev/serial/by-id/usb-Klipper_stm32f446xx_25002B000C51333134383631
 canbus_uuid=6c78b910a439
 ##	If you want to use the Raspberry uart0 to communicate with Spider, 
 ##  you need to select 'Communication interface' to 'Serial (on USART1 PA10/PA9)' 
 ##  in 'make menuconfig' when you compile klipper and set the serial as below
 ##--------------------------------------------------------------------
-#serial: /dev/ttyAMA0
+## serial: /dev/ttyAMA0
+##serial: /dev/ttyUSB0
 ##--------------------------------------------------------------------
+
 ## Uncomment below if you're using the Raspberry uart0 to communicate with Spider
-#restart_method: command
+##?????restart_method: command
 
 #[temperature_sensor mcu_temp]
 #sensor_type: temperature_mcu
 #min_temp: 0
 #max_temp: 100
 
-[temperature_sensor raspberry_pi]
-sensor_type: temperature_host
-min_temp: 10
-max_temp: 100
+#[temperature_sensor raspberry_pi]
+#sensor_type: temperature_host
+#min_temp: 10
+#max_temp: 100
+
+#[mcu rpi]
+#serial: /tmp/klipper_host_mcu
+
+#[adxl345]
+#cs_pin: rpi:None
+
+#[resonance_tester]
+#accel_chip: adxl345
+#probe_points:
+    117, 117, 20
 
 [printer]
 kinematics: corexy
 max_velocity: 300
 max_accel: 16000 #3200
+max_accel_to_decel: 8000 #7000
 max_z_velocity: 5
 max_z_accel: 50
 
@@ -79,17 +82,6 @@ position_min: -16
 position_max: 264
 homing_speed: 100
 homing_retract_dist: 6
-#homing_positive_dir: true
-
-[tmc2209 stepper_x]
-uart_pin: PE7
-#interpolate: True
-run_current: 1.4
-#hold_current: 0.5
-sense_resistor: 0.110
-#stealthchop_threshold: 0
-
-##--------------------------------------------------------------------
 
 [stepper_y]
 step_pin: PD8
@@ -103,19 +95,6 @@ position_min: -15.
 position_max: 243
 homing_speed: 80
 homing_retract_dist: 6
-#homing_positive_dir: true
-
-[tmc2209 stepper_y]
-uart_pin: PE15
-#interpolate: True
-run_current: 1.4
-#hold_current: 0.4
-sense_resistor: 0.110
-#stealthchop_threshold: 0
-
-#####################################################################
-#   Z Stepper Settings
-#####################################################################
 
 [stepper_z]
 step_pin: PD14
@@ -128,20 +107,6 @@ position_max: 400
 position_min: -5
 homing_speed: 10
 
-second_homing_speed: 3
-homing_retract_dist: 3
-
-##	Make sure to update below for your relevant driver (2208 or 2209)
-[tmc2209 stepper_z]
-uart_pin: PD10
-#interpolate: True
-run_current: 0.85
-#hold_current: 0.4
-#sense_resistor: 0.110
-stealthchop_threshold: 999999
-
-##	In E1-MOT Position
-##	Z1 Stepper - Rear Left
 [stepper_z1]
 step_pin: PE6
 dir_pin: PC13
@@ -149,17 +114,6 @@ enable_pin: !PE5
 microsteps: 16
 rotation_distance: 2
 
-##	Make sure to update below for your relevant driver (2208 or 2209)
-[tmc2209 stepper_z1]
-uart_pin: PC14
-#interpolate: True
-run_current: 0.85
-#hold_current: 0.4
-#sense_resistor: 0.110
-stealthchop_threshold: 999999
-
-##	In E2-MOT Position
-##	Z2 Stepper - Rear Right
 [stepper_z2]
 step_pin: PE2
 dir_pin: PE4
@@ -167,97 +121,67 @@ enable_pin: !PE3
 microsteps: 16
 rotation_distance: 2
 
-##	Make sure to update below for your relevant driver (2208 or 2209)
-[tmc2209 stepper_z2]
-uart_pin: PC15
-#interpolate: true
-run_current: 0.85
-#hold_current: 0.4
-#sense_resistor: 0.110
-stealthchop_threshold: 999999
+#[stepper_z1]  #[extruder0]
+#step_pin: PD5
+#dir_pin: PD6
+#enable_pin: !PD4
+#microsteps: 16
+#rotation_distance: 4
 
+#[extruder]  #[extruder1]
+#step_pin: PE6
+#dir_pin: !PC13
+#enable_pin: !PE5
 
-#####################################################################
-#   Extruder
-#####################################################################
-
-##	In E0-MOT Position
 [extruder]
 step_pin: PD5
-dir_pin: !PD6
+dir_pin: PD6
 enable_pin: !PD4
-
-##	Update value below when you perform extruder calibration
-##	If you ask for 100mm of filament, but in reality it is 98mm:
-##	rotation_distance = <previous_rotation_distance> * <actual_extrude_distance> / 100
-##  22.6789511 is a good starting point
-rotation_distance: 22.6789511	#Bondtech 5mm Drive Gears
-##	Update Gear Ratio depending on your Extruder Type
-##	Use 50:17 for Afterburner/Clockwork (BMG Gear Ratio)
-##	Use 80:20 for M4, M3.1
-gear_ratio: 50:17				#BMG Gear Ratio
-microsteps: 16
-full_steps_per_rotation: 200	#200 for 1.8 degree, 400 for 0.9 degree
-nozzle_diameter: 0.400
-filament_diameter: 1.75
-##      In E0 OUT Position
 heater_pin: PB15
-##	Validate the following thermistor type to make sure it is correct
-sensor_type: Generic 3950#ATC Semitec 104GT-2
-sensor_pin: PC0 # TE0 Position
+sensor_pin: PC0
+microsteps: 16
+rotation_distance: 22.225
+gear_ratio: 50:17 #for 
+full_steps_per_rotation: 200 #1.8deg Motor
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+min_extrude_temp: 0
+max_extrude_only_distance: 1400
+max_extrude_cross_section: 50.0
+pressure_advance: 0.0875
+sensor_type: ATC Semitec 104GT-2
 min_temp: 10
 max_temp: 270
 max_power: 1.0
 min_extrude_temp: 170
-control = pid
-pid_kp = 26.213
-pid_ki = 1.304
-pid_kd = 131.721
-##	Try to keep pressure_advance below 1.0
-pressure_advance: 0.05
-##	Default is 0.040, leave stock
-pressure_advance_smooth_time: 0.040
+#control = pid
+#pid_Kp=32.398
+#pid_Ki=1.846
+#pid_Kd=142.144
 
-##	In E0-MOT Position
-##	Make sure to update below for your relevant driver (2208 or 2209)
-[tmc2209 extruder]
-uart_pin: PD7
-interpolate: false
-run_current: 0.375
-#hold_current: 0.2
-#sense_resistor: 0.110
-#stealthchop_threshold: 0
+#[safe_z_home]
+#home_xy_position: 143, 123
+#speed: 100
+#z_hop: 10
+#z_hop_speed: 5
 
-#####################################################################
-#   Bed Heater
-#####################################################################
-[heater_bed]
-##	SSR Pin - In BED OUT position
-heater_pin: PB4
-sensor_type: EPCOS 100K B57560G104F
-##  Uncomment below for SpiderVersion 1.x
-#sensor_pin: PC3 # TB Position
-##  Uncomment below for SpiderVersion 2.2
-sensor_pin: PB0 # TB Position
-##	Adjust Max Power so your heater doesn't warp your bed
-max_power: 0.6
-min_temp: 0
-max_temp: 100
-control: pid
-pid_kp: 66.031
-pid_ki: 0.906
-pid_kd: 1203.419
+#[homing_override]  ## **Moved this to Euclid probe config**
+#set_position_z: 5 ## this tells machine "hey this is the damn Z height you are at right now"
+#gcode:
+#     G1 Z12 F6000 #this rapids the Z to a total of Z height of 12 so moves it 7mm
+#    G28 Y0 #home Y to 0 (do i need the 0??)
+#    G28 X0 #home X to 0
+#    G1 X117 Y117 F6000#rapid to center of bed
+#    G28 Z0 #home the Z axis
+#    G1 Z12 F1000
 
-#####################################################################
-#	Probe
-#####################################################################
 
 [probe]
 ##    Euclid Probe
 pin: PA0 
 x_offset: 0
 y_offset: 23.
-z_offset: 7.610  #new Ruby nozzle. Old one = 8.110
+#z_offset: 7.610  #new Ruby nozzle. Old one = 8.110
 speed: 9
 samples: 3
 samples_result: median
@@ -285,129 +209,26 @@ mesh_pps: 2,2
 fade_start: 1
 fade_target: 0
 
-#####################################################################
-#	Bltouch
-#####################################################################
 
-#[bltouch]
-##	Bltouch - If you use this section , please comment the [probe] section
-##	More infomation at : https://www.klipper3d.org/BLTouch.html
-##	This bltouch is not used for Z height, only Quad Gantry Leveling
-##	In Z+ Position
-#sensor_pin: PA0
-##	In Y+ Position
-#control_pin: PA2
-#x_offset: 0
-#y_offset: 25.0
-#z_offset: 0
-#speed: 10.0
-#samples: 3
-#samples_result: median
-#sample_retract_dist: 3.0
-#samples_tolerance: 0.006
-#samples_tolerance_retries: 3
+[bed_mesh default]
+# version = 1
+# points =
+# 	  0.103750, 0.084375, 0.066875, 0.063750, 0.109062
+#	  0.107812, 0.062812, 0.046250, -0.004375, -0.047188
+#	  0.027500, 0.017812, -0.005000, -0.061563, -0.104688
+# 	  0.076875, 0.046250, 0.036562, -0.000625, -0.076563
+# 	  0.101875, 0.109062, 0.120625, 0.111562, 0.050000
+# tension = 0.2
+# min_x = 43.0
+# algo = bicubic
+# y_count = 5
+# mesh_y_pps = 2
+# min_y = 28.0
+# x_count = 5
+# max_y = 256.0
+# mesh_x_pps = 2
+# max_x = 243.0
 
-#####################################################################
-#	Fan Control
-#####################################################################
-
-[heater_fan hotend_fan]
-##	Hotend Fan - FAN0 Connector
-##  Uncomment below for SpiderVersion 1.x
-#pin: PB0
-##  Uncomment below for SpiderVersion 2.2
-pin: PA13
-max_power: 1.0
-kick_start_time: 0.5
-heater: extruder
-heater_temp: 50.0
-##	If you are experiencing back flow, you can reduce fan_speed
-#fan_speed: 1.0
-
-[fan]
-##	Print Cooling Fan - FAN1 Connector
-pin: PB1
-max_power: 1.0 # change to 0.4 if you're having problems with heater not extruding at expected rate
-##=======
-##  Uncomment below for SpiderVersion 1.x
-#pin: PB1
-##  Uncomment below for SpiderVersion 2.2
-pin: PA14
-kick_start_time: 0.5
-##	Depending on your fan, you may need to increase this value
-##	if your fan will not start. Can change cycle_time (increase)
-##	if your fan is not able to slow down effectively
-off_below: 0.10
-
-#[heater_fan controller_fan]
-##	Controller fan - FAN2 Connector
-#pin: PB2
-#kick_start_time: 0.5
-#heater: extruder
-#heater_temp: 45.0
-
-[temperature_fan MCU_fan]
-pin: PB2
-max_power: 0.60
-hardware_pwm: true
-control: watermark
-#max_delta: 2
-sensor_type: temperature_mcu
-min_temp: 10
-max_temp: 80
-target_temp: 38
-
-#[heater_fan exhaust_fan]
-##  Exhaust fan - In E2 OUT Positon
-#pin: PB3
-#max_power: 1.0
-#shutdown_speed: 0.0
-#kick_start_time: 5.0
-#heater: heater_bed
-#heater_temp: 60
-#fan_speed: 1.0
-
-#[controller_fan nevermore]
-# Nevermore - In E1 OUT Position
-#pin: PC8
-#kick_start_time: 0.500
-#fan_speed: 0.5
-
-#####################################################################
-#	LED Control
-#####################################################################
-
-# Chamber Lighting
-[output_pin caselight]
-pin: PB3
-#max_power: 1.0
-#kick_start_time: 0.5
-pwm: true
-shutdown_value: 0
-value: .05
-cycle_time: 0.01
-#scale: 100
- 
-# Lighting Control
-[gcode_macro lights_off]
-gcode:
-    SET_PIN PIN=caselight VALUE=0
- 
-[gcode_macro lights_on]
-gcode:
-    SET_PIN PIN=caselight VALUE=1
- 
-[gcode_macro lights_toggle]
-gcode:
-    {% if printer["output_pin caselight"].value == 1 %}
-        lights_off
-    {% else %}
-        lights_on
-    {% endif %}
-    
-#####################################################################
-#	Homing and Gantry Adjustment Routines
-#####################################################################
 
 [screws_tilt_adjust]  #command is : SCREWS_TILT_CALCULATE
 screw1: 35,10
@@ -435,6 +256,44 @@ speed: 250.
 horizontal_move_z: 10
 retries: 10
 retry_tolerance: 0.02
+
+#######################
+##### Bed Section #####
+#######################
+
+[heater_bed]
+heater_pin: PB4
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PB0
+#control: pid
+# tuned for stock hardware with 60 degree Celsius target
+#pid_Kp=67.771 
+#pid_Ki=1.195 
+#pid_Kd=960.649
+min_temp: 0
+max_temp: 105
+
+####################
+####### FANS #######
+####################
+
+[heater_fan controller_fan]
+##	Controller fan - FAN2 Connector
+pin: PB2
+kick_start_time: 0.5
+heater: extruder
+heater_temp: 45.0
+
+#fan for printed model FAN0
+[fan]
+pin: PA14
+
+#fan for hotend FAN1
+[heater_fan hotend_fan]
+pin: PA13
+heater: extruder
+heater_temp: 50.0
+fan_speed: 1.0
 
 ###################################
 ####### Firmware Retraction #######
@@ -487,6 +346,88 @@ resolution: .5 #resolution: 1.0
 #min_temp: -100
 #max_temp: 100
 #gcode_id: C
+
+###########################
+###### LED Control    #####
+###########################
+
+##  Chamber Lighting
+#[output_pin caselight ]
+#pin: PB3
+#pwm: true
+#shutdown_value: 0
+#value: .05  #value at startup
+#cycle_time: 0.01
+
+# Chamber Lighting
+[output_pin caselight]
+pin: PB3
+#max_power: 1.0
+#kick_start_time: 0.5
+pwm: true
+shutdown_value: 0
+value: .05
+cycle_time: 0.01
+#scale: 100
+ 
+# Lighting Control
+[gcode_macro lights_off]
+gcode:
+    SET_PIN PIN=caselight VALUE=0
+ 
+[gcode_macro lights_on]
+gcode:
+    SET_PIN PIN=caselight VALUE=1
+ 
+[gcode_macro lights_toggle]
+gcode:
+    {% if printer["output_pin caselight"].value == 1 %}
+        lights_off
+    {% else %}
+        lights_on
+    {% endif %}
+
+########################################
+# TMC UART configuration
+########################################
+
+[tmc2209 stepper_x]
+uart_pin: PE7
+run_current: 1.4
+#hold_current: 0.5
+#stealthchop_threshold: 999999
+
+[tmc2209 stepper_y]
+uart_pin: PE15
+run_current: 1.4
+#hold_current: 0.5
+#stealthchop_threshold: 999999
+
+[tmc2209 stepper_z]
+uart_pin: PD10
+run_current: 0.85
+#hold_current: 0.5
+stealthchop_threshold: 999999
+
+[tmc2209 extruder] #[tmc2208 extruder1]
+interpolate: True
+uart_pin: PD7
+run_current: 0.375
+#hold_current: 0.5
+#stealthchop_threshold: 999999
+
+[tmc2209 stepper_z1]
+uart_pin: PC14
+run_current: 0.85
+#hold_current: 0.5
+stealthchop_threshold: 999999
+
+[tmc2209 stepper_z2]
+uart_pin: PC15
+run_current: 0.85
+#hold_current: 0.5
+stealthchop_threshold: 999999
+
 ###################################
 ##  Euclid Probe Add-on Section  ##
 ###################################
@@ -551,16 +492,6 @@ gcode:
     M104 S0 ;Turn-off hotend
     M140 S0 ;Turn-off bed
     M84 X Y E0 ;Disable all steppers but Z
-
-    
-## 	Thermistor Types
-##   "EPCOS 100K B57560G104F"
-##   "ATC Semitec 104GT-2"
-##   "NTC 100K beta 3950"
-##   "Honeywell 100K 135-104LAG-J01"
-##   "NTC 100K MGB18-104F39050L32" (Keenovo Heater Pad)
-##   "AD595"
-##   "PT100 INA826"
 
 #*# <---------------------- SAVE_CONFIG ---------------------->
 #*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
